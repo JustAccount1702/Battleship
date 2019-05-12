@@ -1,44 +1,48 @@
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Random;
-import javax.swing.*;
 
-public class PlayerField  extends JFrame implements ActionListener {
-    static boolean isGameStarted;
+public class PlayerField extends JFrame {
+    static EnemyField enemyField;
 
-    static {
-        isGameStarted = false;
-    }
-
+    boolean shipsPlaced = false;
     boolean hasShip[][];
     boolean wasChecked[][];
+    boolean isBusy[][];
     JButton buttons[][];
     int amountOfPoints;
 
-    PlayerField() {
+    int size = 4;
+    int amount = 1;
+    boolean horizontal = true;
+
+
+    PlayerField(){
+
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int sizeWidth = 360;
         int sizeHeight = 400;
-        int locationX = (screenSize.width - sizeWidth) / 2;
+        int locationX = (screenSize.width - sizeWidth) / 2 - 180;
         int locationY = (screenSize.height - sizeHeight) / 2;
         setBounds(locationX, locationY, sizeWidth, sizeHeight);
 
-        setTitle("Поле противника");
+        setTitle("Ваше поле");
         hasShip = new boolean[10][10];
         wasChecked = new boolean[10][10];
+        isBusy = new boolean[10][10];
         amountOfPoints = 20;
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
-                isGameStarted = false;
+                EnemyField.isGameStarted = false;
+                enemyField.dispose();
                 dispose();
             }
         });
         setLayout(null);
-        generateField();
         buttons = new JButton[10][];
         for (int i = 0; i < 10; ++i)
             buttons[i] = new JButton[10];
@@ -49,168 +53,136 @@ public class PlayerField  extends JFrame implements ActionListener {
             {
                 buttons[y][x] = new JButton();
                 buttons[y][x].setBounds(10 + 35*x,10+35*y, 30,30);
-                buttons[y][x].addActionListener(this);
+                buttons[y][x].setBackground(Color.WHITE);
+                buttons[y][x].addMouseListener(new MouseAdapter()
+                {
+                    public void mouseEntered(MouseEvent e)
+                    {
+                        for (int i = 0; i < 100; ++i)
+                            if (e.getSource() == buttons[i/10][i%10])
+                                if (horizontal && i%10 <= 10 - size || !horizontal && i/10 <= 10 - size)
+                                for (int j = 0; j < size; ++j)
+                                    buttons[(horizontal)?i/10:i/10+j][(horizontal)?(i+j)%10:i%10].setBackground(Color.GREEN);
+                    }
+                    public void mouseExited(MouseEvent e)
+                    {
+                        for (int i = 0; i < 100; ++i)
+                            if (e.getSource() == buttons[i/10][i%10] )
+                                if (horizontal && i%10 <= 10 - size || !horizontal && i/10 <= 10 - size)
+                                for (int j = 0; j < size; ++j)
+                                    if (!hasShip[(horizontal)?i/10:i/10+j][(horizontal)?(i+j)%10:i%10])
+                                        buttons[(horizontal)?i/10:i/10+j][(horizontal)?(i+j)%10:i%10].setBackground(Color.WHITE);
+                    }
+                    public void mousePressed(MouseEvent e)
+                    {
+                        switch (e.getButton()) {
+                            case MouseEvent.BUTTON3: {
+                                for (int i = 0; i < 100; ++i)
+                                    if (e.getSource() == buttons[i / 10][i % 10])
+                                        if (horizontal && i % 10 <= 10 - size || !horizontal && i / 10 <= 10 - size)
+                                            for (int j = 0; j < size; ++j) {
+                                                buttons[(horizontal) ? i / 10 : i / 10 + j][(horizontal) ? (i + j) % 10 : i % 10].setBackground(Color.WHITE);
+                                                buttons[(horizontal) ? i / 10 + j : i / 10][(horizontal) ? i % 10 : (i + j) % 10].setBackground(Color.GREEN);
+                                            }
+
+                                horizontal = !horizontal;
+                                break;
+                            }
+                            case MouseEvent.BUTTON1:{
+
+                                for (int i = 0; i < 100; ++i)
+                                    if (e.getSource() == buttons[i / 10][i % 10]) {
+
+                                        if (horizontal && i % 10 <= 10 - size || !horizontal && i / 10 <= 10 - size) {
+                                            boolean mayFit = true;
+                                            for (int j = 0; j < size; ++j)
+                                                if (isBusy[(horizontal) ? i / 10 : i / 10 + j][(horizontal) ? (i + j) % 10 : i % 10])
+                                                    mayFit = false;
+                                                if (mayFit) {
+                                                    for (int j = 0; j < size; ++j){
+                                                        hasShip[(horizontal) ? i / 10 : i / 10 + j][(horizontal) ? (i + j) % 10 : i % 10] = true;
+                                                        isBusy[(horizontal) ? i / 10 : i / 10 + j][(horizontal) ? (i + j) % 10 : i % 10] = true;
+                                                        buttons[(horizontal) ? i / 10 : i / 10 + j][(horizontal) ? (i + j) % 10 : i % 10].setBackground(Color.GREEN);
+                                                    }
+
+                                                    if (horizontal) {
+                                                        if (i%10 - 1 >= 0) {
+                                                            isBusy[i/10][i%10 - 1] = true;
+                                                            if (i/10 + 1 < 10)
+                                                                isBusy[i/10 + 1][i%10 - 1] = true;
+                                                            if (i/10 - 1 >= 0)
+                                                                isBusy[i/10 - 1][i%10 - 1] = true;
+                                                        }
+
+                                                        if (i%10 + size < 10) {
+                                                            isBusy[i/10][i%10 + size] = true;
+                                                            if (i/10 + 1 < 10)
+                                                                isBusy[i/10 + 1][i%10 + size] = true;
+                                                            if (i/10 - 1 >= 0)
+                                                                isBusy[i/10 - 1][i%10 + size] = true;
+                                                        }
+                                                        if (i/10 - 1 >= 0)
+                                                            for (int j = 0; j < size + 1; ++j)
+                                                                isBusy[i/10 - 1][i%10 + j] = true;
+                                                        if (i/10 + 1 < 10)
+                                                            for (int j = 0; j < size; ++j)
+                                                                isBusy[i/10 + 1][i%10 + j] = true;
+                                                    } else {
+                                                        if (i/10 - 1 >= 0) {
+                                                            if (i%10 + 1 < 10)
+                                                                isBusy[i/10 - 1][i%10 + 1] = true;
+                                                            if (i%10 - 1 >= 0)
+                                                                isBusy[i/10 - 1][i%10 - 1] = true;
+                                                            isBusy[i/10 - 1][i%10] = true;
+                                                        }
+                                                        if (i/10 + size < 10) {
+                                                            if (i%10 + 1 < 10)
+                                                                isBusy[i/10 + size][i%10 + 1] = true;
+                                                            if (i%10 - 1 >= 0)
+                                                                isBusy[i/10 + size][i%10 - 1] = true;
+                                                            isBusy[i/10 + size][i%10] = true;
+                                                        }
+                                                        if (i%10 - 1 >= 0)
+                                                            for (int j = 0; j < size; ++j)
+                                                                isBusy[i/10 + j][i%10 - 1] = true;
+                                                        if (i%10 + 1 < 10)
+                                                            for (int j = 0; j < size; ++j)
+                                                                isBusy[i/10 + j][i%10 + 1] = true;
+                                                    }
+                                                    if (--amount == 0) {
+                                                        amount = 6 - size;
+                                                        size--;
+                                                    }
+                                                    if (size == 0)
+                                                    {
+                                                        amount = 0;
+                                                        shipsPlaced = true;
+                                                    }
+                                                }
+
+
+                                        }
+
+                                        break;
+                                    }
+                                break;
+                            }
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt)
+                    {
+                    }
+                });
                 add(buttons[y][x]);
 
             }
         }
-        isGameStarted = true;
+        enemyField = new EnemyField();
+
         setVisible(true);
 
     }
 
-    void generateField() {
-        Random rand = new Random();
-        boolean isBusy[][] = new boolean[10][10];
 
-        for (int size = 4; size > 0; --size)
-            for (int amount = 4 - size; amount >= 0; --amount) {
-                boolean foundSpot = false;
-                while (!foundSpot) {
-                    int startX = rand.nextInt(10);
-                    int startY = rand.nextInt(10);
-                    while (isBusy[startY][startX]) {
-                        if (startX == 9 && startY == 9) {
-                            startX = 0;
-                            startY = 0;
-                        } else if (startX < 9)
-                            startX++;
-                        else {
-                            startX = 0;
-                            startY++;
-                        }
-                    }
-
-
-                    boolean mayFit = true;
-                    boolean horizontal = rand.nextBoolean();
-                    for (int cell = 0; cell < size; ++cell) {
-                        if (startX + ((horizontal) ? cell : 0) >= 10 || startY + ((horizontal) ? 0 : cell) >= 10 || (isBusy[startY + ((horizontal) ? 0 : cell)][startX + ((horizontal) ? cell : 0)])) {
-                            mayFit = false;
-                            break;
-                        }
-                    }
-                    if (mayFit) {
-                        foundSpot = true;
-                        for (int cell = 0; cell < size; ++cell) {
-                            hasShip[startY + ((horizontal) ? 0 : cell)][startX + ((horizontal) ? cell : 0)] = true;
-                            isBusy[startY + ((horizontal) ? 0 : cell)][startX + ((horizontal) ? cell : 0)] = true;
-                        }
-                        if (horizontal) {
-                            if (startX - 1 >= 0) {
-                                isBusy[startY][startX - 1] = true;
-                                if (startY + 1 < 10)
-                                    isBusy[startY + 1][startX - 1] = true;
-                                if (startY - 1 >= 0)
-                                    isBusy[startY - 1][startX - 1] = true;
-                            }
-
-                            if (startX + size < 10) {
-                                isBusy[startY][startX + size] = true;
-                                if (startY + 1 < 10)
-                                    isBusy[startY + 1][startX + size] = true;
-                                if (startY - 1 >= 0)
-                                    isBusy[startY - 1][startX + size] = true;
-                            }
-                            if (startY - 1 >= 0)
-                                for (int i = 0; i < size; ++i)
-                                    isBusy[startY - 1][startX + i] = true;
-                            if (startY + 1 < 10)
-                                for (int i = 0; i < size; ++i)
-                                    isBusy[startY + 1][startX + i] = true;
-                        } else {
-                            if (startY - 1 >= 0) {
-                                if (startX + 1 < 10)
-                                    isBusy[startY - 1][startX + 1] = true;
-                                if (startX - 1 >= 0)
-                                    isBusy[startY - 1][startX - 1] = true;
-                                isBusy[startY - 1][startX] = true;
-                            }
-                            if (startY + size < 10) {
-                                if (startX + 1 < 10)
-                                    isBusy[startY + size][startX + 1] = true;
-                                if (startX - 1 >= 0)
-                                    isBusy[startY + size][startX - 1] = true;
-                                isBusy[startY + size][startX] = true;
-                            }
-                            if (startX - 1 >= 0)
-                                for (int i = 0; i < size; ++i)
-                                    isBusy[startY + i][startX - 1] = true;
-                            if (startX + 1 < 10)
-                                for (int i = 0; i < size; ++i)
-                                    isBusy[startY + i][startX + 1] = true;
-                        }
-                    }
-                }
-            }
-    }
-
-    void showField() {
-        System.out.print("   ");
-        for (int i = 0; i < 10; ++i)
-            System.out.print(i + 1 + " ");
-        System.out.println();
-        for (int y = 0; y < 10; ++y) {
-            if (y != 9)
-                System.out.print(' ');
-            System.out.print(y + 1);
-            System.out.print(' ');
-            for (int x = 0; x < 10; ++x) {
-
-                System.out.print((hasShip[y][x] ? '*' : ' ') + " ");
-            }
-            System.out.println();
-        }
-    }
-
-    void showPlayerField() {
-        System.out.print("   ");
-        for (int i = 0; i < 10; ++i)
-            System.out.print(i + 1 + " ");
-        System.out.println();
-        for (int y = 0; y < 10; ++y) {
-            if (y != 9)
-                System.out.print(' ');
-            System.out.print(y + 1);
-            System.out.print(' ');
-            for (int x = 0; x < 10; ++x) {
-
-                if (wasChecked[y][x])
-                    System.out.print((hasShip[y][x] ? '*' : ' ') + " ");
-                else
-                    System.out.print("? ");
-            }
-            System.out.println();
-        }
-    }
-
-    boolean checkCell(int y, int x) {
-        wasChecked[y][x] = true;
-        if (hasShip[y][x])
-            amountOfPoints--;
-        return amountOfPoints == 0;
-    }
-
-    public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < 100; ++i)
-                if (e.getSource() == buttons[i/10][i%10] && !wasChecked[i/10][i%10])
-                {
-                    wasChecked[i/10][i%10] = true;
-                    if (hasShip[i/10][i%10])
-                    {
-                        buttons[i/10][i%10].setBackground(Color.GREEN);
-                        amountOfPoints--;
-                    }
-                    else
-                        buttons[i/10][i%10].setBackground(Color.BLUE);
-                    break;
-                }
-        if (amountOfPoints == 0)
-        {
-            JOptionPane.showMessageDialog(null, "Вы победили!");
-            dispose();
-            isGameStarted = false;
-        }
-    }
 
 }

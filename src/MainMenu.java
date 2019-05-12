@@ -6,7 +6,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class MainMenu extends JFrame {
-    PlayerField pl;
+    static PlayerField playerField;
     MainMenu() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int sizeWidth = 360;
@@ -30,8 +30,8 @@ public class MainMenu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                if (!PlayerField.isGameStarted)
-                    pl = new PlayerField();
+                if (!EnemyField.isGameStarted)
+                    playerField = new PlayerField();
             }
         });
         JButton exitButton = new JButton("Выход");
