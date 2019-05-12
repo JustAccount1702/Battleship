@@ -4,16 +4,22 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Random;
 
 public class PlayerField extends JFrame {
     static EnemyField enemyField;
 
-    boolean shipsPlaced = false;
+    static boolean shipsPlaced;
+
+    static {
+        shipsPlaced = false;
+    }
+
     boolean hasShip[][];
     boolean wasChecked[][];
     boolean isBusy[][];
     JButton buttons[][];
-    int amountOfPoints;
+    int amountOfPoints = 20;
 
     int size = 4;
     int amount = 1;
@@ -122,7 +128,7 @@ public class PlayerField extends JFrame {
                                                                 isBusy[i/10 - 1][i%10 + size] = true;
                                                         }
                                                         if (i/10 - 1 >= 0)
-                                                            for (int j = 0; j < size + 1; ++j)
+                                                            for (int j = 0; j < size; ++j)
                                                                 isBusy[i/10 - 1][i%10 + j] = true;
                                                         if (i/10 + 1 < 10)
                                                             for (int j = 0; j < size; ++j)
@@ -156,6 +162,8 @@ public class PlayerField extends JFrame {
                                                     if (size == 0)
                                                     {
                                                         amount = 0;
+                                                        JOptionPane.showMessageDialog(null, "Теперь можно играть)");
+
                                                         shipsPlaced = true;
                                                     }
                                                 }
@@ -180,9 +188,36 @@ public class PlayerField extends JFrame {
         enemyField = new EnemyField();
 
         setVisible(true);
+        JOptionPane.showMessageDialog(null, "Расставьте корабли на своём поле");
 
     }
 
+    public boolean hit() {
+        Random rand = new Random();
+        int x = rand.nextInt(10);
+        int y = rand.nextInt(10);
+
+
+        while (wasChecked[y][x]) {
+            if (x == 9 && y == 9) {
+                x = 0;
+                y = 0;
+            } else if (x < 9)
+                x++;
+            else {
+                x = 0;
+                y++;
+            }
+        }
+
+        wasChecked[y][x] = true;
+        if (hasShip[y][x]) {
+            buttons[y][x].setBackground(Color.RED);
+            amountOfPoints--;
+        } else
+            buttons[y][x].setBackground(Color.BLUE);
+        return amountOfPoints == 0;
+    }
 
 
 }

@@ -195,25 +195,34 @@ public class EnemyField extends JFrame implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < 100; ++i)
-                if (e.getSource() == buttons[i/10][i%10] && !wasChecked[i/10][i%10])
-                {
-                    wasChecked[i/10][i%10] = true;
-                    if (hasShip[i/10][i%10])
-                    {
-                        buttons[i/10][i%10].setBackground(Color.GREEN);
+        if (PlayerField.shipsPlaced) {
+            for (int i = 0; i < 100; ++i)
+                if (e.getSource() == buttons[i / 10][i % 10] && !wasChecked[i / 10][i % 10]) {
+                    wasChecked[i / 10][i % 10] = true;
+                    if (hasShip[i / 10][i % 10]) {
+                        buttons[i / 10][i % 10].setBackground(Color.GREEN);
                         amountOfPoints--;
+                    } else
+                        buttons[i / 10][i % 10].setBackground(Color.BLUE);
+
+                    if (MainMenu.playerField.hit())
+                    {
+                        JOptionPane.showMessageDialog(null, "Противник уничтожил все ваши корабли!");
+                        dispose();
+                        MainMenu.playerField.dispose();
+                        isGameStarted = false;
                     }
-                    else
-                        buttons[i/10][i%10].setBackground(Color.BLUE);
                     break;
                 }
-        if (amountOfPoints == 0)
-        {
-            JOptionPane.showMessageDialog(null, "Вы победили!");
-            dispose();
-            MainMenu.playerField.dispose();
-            isGameStarted = false;
+            if (amountOfPoints == 0) {
+                JOptionPane.showMessageDialog(null, "Вы победили!");
+                dispose();
+                MainMenu.playerField.dispose();
+                isGameStarted = false;
+            }
+        }
+        else {
+            JOptionPane.showMessageDialog(null, "Сначала расставьте корабли на своём поле!");
         }
     }
 
